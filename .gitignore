@@ -1,0 +1,29 @@
+# Python virtual environment (if created in project root)
+bin/
+include/
+lib/
+lib64/
+pyvenv.cfg
+
+# Python caches & test artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local runtime data, databases & downloads
+var/
+instance/
+downloads/
+*.db
+*.sqlite
+*.sqlite3
+*.part
+
+# Environment & OS files
+.env
+.env.*
+.DS_Store
+Thumbs.db

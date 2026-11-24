@@ -1,0 +1,319 @@
+{% extends "admin_layout.html" %}
+
+{% block title %}Dashboard · {{ site_settings.site_name }}{% endblock %}
+{% block page_title %}Dashboard Overview{% endblock %}
+{% block page_subtitle %}Real-time pipeline telemetry, queue activity &amp; system health{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- Welcome Banner -->
+  <section class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-violet-950 p-6 sm:p-8 text-white shadow-soft animate-fade-in-up">
+    <div class="pointer-events-none absolute -right-12 -top-12 h-56 w-56 rounded-full bg-indigo-500/20 blur-3xl"></div>
+    <div class="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <div class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-indigo-200 backdrop-blur">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+          Welcome back, {{ current_admin.display_name }}
+        </div>
+        <h2 class="mt-3 text-2xl font-extrabold tracking-tight sm:text-3xl">
+          {{ site_settings.site_name }} Control Center
+        </h2>
+        <p class="mt-1.5 max-w-xl text-sm text-slate-300">
+          All download workers are synced. Currently running with up to
+          <strong class="text-white">{{ site_settings.max_concurrent_downloads }}</strong> concurrent slots and a
+          <strong class="text-white">{{ site_settings.storage_quota_gb }} GB</strong> storage quota.
+        </p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <a
+          href="{{ url_for('settings') }}"
+          class="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 shadow transition hover:bg-indigo-50 hover:-translate-y-0.5"
+        >
+          <i class="fa-solid fa-sliders text-indigo-600"></i>
+          Configure Settings
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPI Cards -->
+  <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    {% for kpi in kpis %}
+      <div
+        class="card-hover rounded-2xl border border-slate-200/80 bg-white p-5 shadow-soft animate-fade-in-up"
+        style="animation-delay: {{ loop.index0 * 75 }}ms"
+      >
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">
+              {{ kpi.label }}
+            </p>
+            <p
+              class="mt-2 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl"
+              data-count-target="{{ kpi.value }}"
+              data-count-suffix="{{ kpi.suffix }}"
+              data-count-decimals="{{ kpi.decimals }}"
+            >
+              {{ kpi.value }}{{ kpi.suffix }}
+            </p>
+          </div>
+          <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br {{ kpi.gradient }} text-white shadow-sm">
+            <i class="fa-solid {{ kpi.icon }}"></i>
+          </div>
+        </div>
+        <div class="mt-4 flex items-center gap-2 text-xs font-medium">
+          {% if kpi.trend == 'up' %}
+            <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-emerald-700">
+              <i class="fa-solid fa-arrow-trend-up text-[10px]"></i>
+              {{ kpi.delta }}
+            </span>
+          {% else %}
+            <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-slate-600">
+              <i class="fa-solid fa-circle-dot text-[9px]"></i>
+              {{ kpi.delta }}
+            </span>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </section>
+
+  <!-- Analytics + System Health -->
+  <section class="grid grid-cols-1 gap-6 lg:grid-cols-12">
+    <!-- Traffic Chart -->
+    <div class="lg:col-span-8 rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-soft animate-fade-in-up delay-150">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Download Throughput</h3>
+          <p class="text-xs text-slate-500">Completed asset transfers across edge nodes</p>
+        </div>
+        <div class="inline-flex rounded-xl bg-slate-100 p-1 self-start sm:self-auto">
+          <button
+            type="button"
+            data-chart-range="7d"
+            class="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-sm transition"
+          >
+            7 Days
+          </button>
+          <button
+            type="button"
+            data-chart-range="30d"
+            class="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-500 transition hover:text-slate-800"
+          >
+            30 Days
+          </button>
+        </div>
+      </div>
+
+      <div
+        class="mt-8 h-56 flex items-end gap-3 sm:gap-5 px-1"
+        id="traffic-chart-bars"
+        data-chart-datasets='{{ chart_datasets | tojson }}'
+      >
+        {% for bar in chart_bars %}
+          <div class="flex-1 flex flex-col items-center gap-2 group h-full justify-end">
+            <div class="relative w-full flex-1 flex items-end justify-center">
+              <span class="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute -top-7 px-2 py-0.5 rounded bg-slate-900 text-white text-[11px] font-medium whitespace-nowrap shadow">
+                {{ bar.count }} {{ 'download' if bar.count == '1' else 'downloads' }}
+              </span>
+              <div
+                class="w-full max-w-[40px] rounded-t-xl transition-all duration-300 animate-bar-grow shadow-sm {% if bar.empty %}bg-slate-200{% else %}bg-gradient-to-t from-indigo-600 via-indigo-500 to-violet-400 group-hover:from-indigo-500 group-hover:to-fuchsia-400{% endif %}"
+                style="height: {{ bar.val }}%; animation-delay: {{ loop.index0 * 50 }}ms"
+              ></div>
+            </div>
+            <span class="text-xs font-medium text-slate-500">{{ bar.label }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- System Health -->
+    <div id="system-health" class="lg:col-span-4 rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-soft animate-fade-in-up delay-225">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-bold text-slate-900">System Health</h3>
+          <p class="text-xs text-slate-500">Resource &amp; quota telemetry</p>
+        </div>
+        <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+          <i class="fa-solid fa-heart-pulse"></i>
+        </span>
+      </div>
+
+      <div class="mt-6 space-y-5">
+        {% for metric in system_metrics %}
+          <div>
+            <div class="flex items-center justify-between text-xs font-semibold">
+              <span class="text-slate-700">{{ metric.label }}</span>
+              <span class="text-slate-500">{{ metric.value }}</span>
+            </div>
+            <div class="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+              <div
+                class="h-full rounded-full {{ metric.color }} transition-all duration-700"
+                style="width: {{ metric.pct }}%"
+              ></div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="mt-6 rounded-2xl border border-slate-100 bg-slate-50 p-4">
+        <div class="flex items-center justify-between text-xs">
+          <span class="font-semibold text-slate-700">Webhook Alerts</span>
+          {% if site_settings.email_alerts == '1' or site_settings.failed_job_alerts == '1' %}
+            <span class="inline-flex items-center gap-1 font-semibold text-emerald-600">
+              <i class="fa-solid fa-circle-check"></i> Enabled
+            </span>
+          {% else %}
+            <span class="inline-flex items-center gap-1 font-semibold text-slate-400">
+              <i class="fa-solid fa-circle-pause"></i> Paused
+            </span>
+          {% endif %}
+        </div>
+        <p class="mt-1 text-[11px] text-slate-500 truncate">
+          {{ site_settings.webhook_url or 'No webhook endpoint configured' }}
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Recent Transfers Table -->
+  <section id="transfers" class="rounded-2xl border border-slate-200/80 bg-white shadow-soft overflow-hidden animate-fade-in-up delay-300">
+    <div class="border-b border-slate-100 p-5 sm:p-6">
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Recent Transfers</h3>
+          <p class="text-xs text-slate-500">Filter by status or search across active and completed jobs</p>
+        </div>
+
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <!-- Search -->
+          <div class="relative">
+            <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+              <i class="fa-solid fa-magnifying-glass text-xs"></i>
+            </span>
+            <input
+              id="activity-search"
+              type="search"
+              placeholder="Search files or ID..."
+              class="w-full sm:w-56 rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-xs text-slate-800 placeholder-slate-400 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+            />
+          </div>
+
+          <!-- Filter Pills -->
+          <div class="flex flex-wrap items-center gap-1.5">
+            {% for filter_name in ['all', 'completed', 'active', 'failed', 'cancelled'] %}
+              <button
+                type="button"
+                data-status-filter="{{ filter_name }}"
+                class="rounded-xl px-3 py-1.5 text-xs font-semibold capitalize transition {% if filter_name == 'all' %}bg-indigo-600 text-white shadow-sm{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200{% endif %}"
+              >
+                {{ filter_name }}
+              </button>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if transfers %}
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-100 text-left text-sm">
+          <thead class="bg-slate-50/80 text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <tr>
+              <th class="px-5 py-3.5">Asset</th>
+              <th class="px-5 py-3.5 hidden md:table-cell">Category</th>
+              <th class="px-5 py-3.5">Size</th>
+              <th class="px-5 py-3.5 hidden sm:table-cell">Progress</th>
+              <th class="px-5 py-3.5">Status</th>
+              <th class="px-5 py-3.5 text-right hidden sm:table-cell">Started</th>
+            </tr>
+          </thead>
+          <tbody id="transfers-tbody" class="divide-y divide-slate-100 bg-white">
+            {% for item in transfers %}
+              {% set badge = {
+                'completed': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                'active': 'bg-sky-50 text-sky-700 border-sky-200',
+                'failed': 'bg-rose-50 text-rose-700 border-rose-200',
+                'cancelled': 'bg-slate-100 text-slate-600 border-slate-200'
+              }.get(item.status, 'bg-slate-100 text-slate-600 border-slate-200') %}
+              <tr
+                data-activity-row
+                data-job-id="{{ item.id }}"
+                data-status="{{ item.status }}"
+                class="transition-colors hover:bg-slate-50/80"
+              >
+                <td class="px-5 py-4">
+                  <div class="flex items-center gap-3">
+                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+                      <i class="fa-solid {{ item.icon }}"></i>
+                    </div>
+                    <div class="min-w-0">
+                      <p class="truncate max-w-[180px] sm:max-w-xs font-semibold text-slate-800">{{ item.name }}</p>
+                      <p class="truncate max-w-[200px] sm:max-w-sm text-xs text-slate-400" title="{{ item.destination_dir }}">
+                        {{ item.short_id }} · {{ item.speed }}{% if item.error %} · {{ item.error }}{% endif %}
+                      </p>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-5 py-4 hidden md:table-cell text-xs font-medium text-slate-500">
+                  {{ item.source }}
+                </td>
+                <td class="px-5 py-4 text-xs font-semibold text-slate-700 whitespace-nowrap" data-col-size>
+                  {{ item.size }}
+                </td>
+                <td class="px-5 py-4 hidden sm:table-cell">
+                  <div class="flex items-center gap-2.5 w-32">
+                    <div class="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
+                      <div
+                        data-col-bar
+                        class="h-full rounded-full {% if item.status == 'failed' %}bg-rose-500{% elif item.status == 'completed' %}bg-emerald-500{% elif item.status == 'cancelled' %}bg-slate-400{% else %}bg-indigo-600{% endif %}"
+                        style="width: {{ item.progress }}%"
+                      ></div>
+                    </div>
+                    <span data-col-pct class="text-xs font-semibold text-slate-500 w-8 text-right">{{ item.progress }}%</span>
+                  </div>
+                </td>
+                <td class="px-5 py-4 whitespace-nowrap" data-col-status>
+                  <span class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold capitalize {{ badge }}">
+                    {% if item.status == 'active' %}
+                      <span class="h-1.5 w-1.5 rounded-full bg-sky-500 animate-pulse"></span>
+                    {% endif %}
+                    {{ item.status }}
+                  </span>
+                </td>
+                <td class="px-5 py-4 text-right text-xs text-slate-500 hidden sm:table-cell whitespace-nowrap">
+                  {{ item.time }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div id="activity-empty" class="hidden p-10 text-center">
+        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+          <i class="fa-solid fa-filter-circle-xmark text-lg"></i>
+        </div>
+        <p class="mt-3 text-sm font-semibold text-slate-700">No matching transfers found</p>
+        <p class="mt-1 text-xs text-slate-500">Try clearing your search term or switching status filters.</p>
+      </div>
+    {% else %}
+      <div class="p-12 text-center">
+        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+          <i class="fa-solid fa-cloud-arrow-down text-lg"></i>
+        </div>
+        <p class="mt-3 text-sm font-bold text-slate-800">No transfers recorded yet</p>
+        <p class="mt-1 text-xs text-slate-500">Start a download from Recent Movies and your live queue and history will appear here.</p>
+        <a
+          href="{{ url_for('movies') }}"
+          class="mt-4 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-500"
+        >
+          <i class="fa-solid fa-film"></i>
+          Browse Recent Movies
+        </a>
+      </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="min-h-full flex bg-slate-50">
+  <!-- Mobile Backdrop -->
+  <div
+    id="sidebar-backdrop"
+    class="fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300 lg:hidden"
+  ></div>
+
+  <!-- Sidebar (Desktop static + Mobile slide-over drawer) -->
+  <aside
+    id="mobile-sidebar"
+    class="fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full flex-col bg-slate-950 text-slate-200 transition-transform duration-300 ease-out lg:static lg:translate-x-0 lg:shrink-0 border-r border-slate-800/80"
+  >
+    <!-- Brand -->
+    <div class="flex h-16 items-center justify-between px-6 border-b border-slate-800/80">
+      <a href="{{ url_for('dashboard') }}" class="flex items-center gap-3 group">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 text-white shadow-glow transition-transform duration-300 group-hover:scale-105 group-hover:rotate-3">
+          <i class="fa-solid fa-bolt text-base"></i>
+        </div>
+        <div class="min-w-0">
+          <div class="truncate text-sm font-bold tracking-tight text-white">
+            {{ site_settings.site_name }}
+          </div>
+          <div class="truncate text-[11px] font-medium text-slate-400">
+            Admin Console
+          </div>
+        </div>
+      </a>
+      <button
+        id="close-sidebar-btn"
+        type="button"
+        aria-label="Close navigation menu"
+        class="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white lg:hidden transition"
+      >
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 overflow-y-auto px-4 py-6 space-y-1.5">
+      <p class="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+        Overview
+      </p>
+
+      <a
+        href="{{ url_for('dashboard') }}"
+        class="group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-200 {% if active_page == 'dashboard' %}bg-indigo-600 text-white shadow-glow{% else %}text-slate-300 hover:bg-slate-900 hover:text-white{% endif %}"
+      >
+        <i class="fa-solid fa-gauge-high w-5 text-center transition-transform duration-200 group-hover:scale-110"></i>
+        <span>Dashboard</span>
+      </a>
+
+      <a
+        href="{{ url_for('movies') }}"
+        class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-200 {% if active_page == 'movies' %}bg-indigo-600 text-white shadow-glow{% else %}text-slate-300 hover:bg-slate-900 hover:text-white{% endif %}"
+      >
+        <span class="flex items-center gap-3">
+          <i class="fa-solid fa-film w-5 text-center transition-transform duration-200 group-hover:scale-110"></i>
+          <span>Recent Movies</span>
+        </span>
+        <span class="rounded-full bg-indigo-500/20 px-2 py-0.5 text-[10px] font-semibold text-indigo-300">
+          HDHub4u
+        </span>
+      </a>
+
+      <a
+        href="{{ url_for('torrents') }}"
+        class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-200 {% if active_page == 'torrents' %}bg-indigo-600 text-white shadow-glow{% else %}text-slate-300 hover:bg-slate-900 hover:text-white{% endif %}"
+      >
+        <span class="flex items-center gap-3">
+          <i class="fa-solid fa-magnet w-5 text-center transition-transform duration-200 group-hover:scale-110"></i>
+          <span>1337x Torrents</span>
+        </span>
+        <span class="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-semibold text-amber-300">
+          24h
+        </span>
+      </a>
+
+      <a
+        href="{{ url_for('dashboard') }}#transfers"
+        class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-300 transition-all duration-200 hover:bg-slate-900 hover:text-white"
+      >
+        <span class="flex items-center gap-3">
+          <i class="fa-solid fa-cloud-arrow-down w-5 text-center transition-transform duration-200 group-hover:scale-110"></i>
+          <span>Transfer Queue</span>
+        </span>
+        {% if active_transfers_count > 0 %}
+          <span class="rounded-full bg-sky-500/20 px-2 py-0.5 text-[11px] font-semibold text-sky-300">
+            {{ active_transfers_count }} active
+          </span>
+        {% else %}
+          <span class="rounded-full bg-slate-800 px-2 py-0.5 text-[11px] font-semibold text-slate-400">
+            Idle
+          </span>
+        {% endif %}
+      </a>
+
+      <a
+        href="{{ url_for('dashboard') }}#system-health"
+        class="group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-300 transition-all duration-200 hover:bg-slate-900 hover:text-white"
+      >
+        <i class="fa-solid fa-server w-5 text-center transition-transform duration-200 group-hover:scale-110"></i>
+        <span>System Health</span>
+      </a>
+
+      <p class="px-3 pt-5 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+        Configuration
+      </p>
+
+      <a
+        href="{{ url_for('settings') }}"
+        class="group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-200 {% if active_page == 'settings' %}bg-indigo-600 text-white shadow-glow{% else %}text-slate-300 hover:bg-slate-900 hover:text-white{% endif %}"
+      >
+        <i class="fa-solid fa-sliders w-5 text-center transition-transform duration-200 group-hover:rotate-45"></i>
+        <span>Admin Settings</span>
+      </a>
+
+      <a
+        href="{{ url_for('settings', tab='paths') }}"
+        class="group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-300 transition-all duration-200 hover:bg-slate-900 hover:text-white"
+      >
+        <i class="fa-solid fa-folder-open w-5 text-center transition-transform duration-200 group-hover:scale-110"></i>
+        <span>Download Paths</span>
+      </a>
+
+      <a
+        href="{{ url_for('settings', tab='sources') }}"
+        class="group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-300 transition-all duration-200 hover:bg-slate-900 hover:text-white"
+      >
+        <i class="fa-solid fa-globe w-5 text-center transition-transform duration-200 group-hover:scale-110"></i>
+        <span>Source URLs</span>
+      </a>
+
+      <a
+        href="{{ url_for('settings', tab='security') }}"
+        class="group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-300 transition-all duration-200 hover:bg-slate-900 hover:text-white"
+      >
+        <i class="fa-solid fa-shield-halved w-5 text-center transition-transform duration-200 group-hover:scale-110"></i>
+        <span>Security & Password</span>
+      </a>
+
+      <a
+        href="{{ url_for('settings', tab='notifications') }}"
+        class="group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-300 transition-all duration-200 hover:bg-slate-900 hover:text-white"
+      >
+        <i class="fa-solid fa-bell w-5 text-center transition-transform duration-200 group-hover:scale-110"></i>
+        <span>Alerts & Webhooks</span>
+      </a>
+    </nav>
+
+    <!-- Status Card -->
+    <div class="px-4 pb-4">
+      <div class="rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-slate-300">Pipeline Status</span>
+          {% if site_settings.maintenance_mode == '1' %}
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-amber-400">
+              <span class="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+              Maintenance
+            </span>
+          {% else %}
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-400">
+              <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              Operational
+            </span>
+          {% endif %}
+        </div>
+        <p class="mt-2 text-xs text-slate-400 leading-relaxed">
+          Max {{ site_settings.max_concurrent_downloads }} concurrent slots · {{ site_settings.storage_quota_gb }} GB quota
+        </p>
+      </div>
+    </div>
+
+    <!-- Admin Footer -->
+    <div class="border-t border-slate-800/80 p-4">
+      <div class="flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 text-xs font-bold text-white">
+            {{ current_admin.display_name[:2] | upper }}
+          </div>
+          <div class="min-w-0">
+            <div class="truncate text-sm font-semibold text-white">{{ current_admin.display_name }}</div>
+            <div class="truncate text-xs text-slate-400">{{ current_admin.role }}</div>
+          </div>
+        </div>
+        <form method="post" action="{{ url_for('logout') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <button
+            type="submit"
+            title="Sign out"
+            aria-label="Sign out"
+            class="rounded-xl p-2 text-slate-400 transition hover:bg-rose-500/15 hover:text-rose-400"
+          >
+            <i class="fa-solid fa-right-from-bracket"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Column -->
+  <div class="flex min-w-0 flex-1 flex-col">
+    <!-- Top Sticky Header -->
+    <header class="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200/80 bg-white/85 px-4 backdrop-blur-md sm:px-6 lg:px-8">
+      <div class="flex items-center gap-3">
+        <button
+          id="open-sidebar-btn"
+          type="button"
+          aria-label="Open navigation menu"
+          class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50 hover:text-slate-900 lg:hidden"
+        >
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <div>
+          <h1 class="text-base font-bold text-slate-900 sm:text-lg">
+            {% block page_title %}Admin Console{% endblock %}
+          </h1>
+          <p class="hidden text-xs text-slate-500 sm:block">
+            {% block page_subtitle %}{{ site_settings.site_tagline }}{% endblock %}
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 sm:gap-3">
+        {% if site_settings.maintenance_mode == '1' %}
+          <a
+            href="{{ url_for('settings') }}"
+            class="hidden sm:inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-100"
+          >
+            <i class="fa-solid fa-screwdriver-wrench"></i>
+            Maintenance Mode On
+          </a>
+        {% endif %}
+
+        <!-- Notifications Dropdown -->
+        <div class="relative">
+          <button
+            type="button"
+            data-dropdown-toggle="notifications-menu"
+            aria-label="Notifications"
+            class="relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 hover:text-indigo-600"
+          >
+            <i class="fa-regular fa-bell"></i>
+            {% if recent_alerts %}
+              <span class="absolute top-2 right-2 flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-600"></span>
+              </span>
+            {% endif %}
+          </button>
+
+          <div
+            id="notifications-menu"
+            data-dropdown-menu
+            class="hidden opacity-0 scale-95 transition-all duration-200 origin-top-right absolute right-0 mt-2 w-80 rounded-2xl border border-slate-200 bg-white p-3 shadow-soft"
+          >
+            <div class="flex items-center justify-between px-2 pb-2 border-b border-slate-100">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Recent Activity</span>
+              <span class="rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-semibold text-indigo-600">
+                {{ recent_alerts | length }}
+              </span>
+            </div>
+            <div class="mt-2 space-y-1.5">
+              {% if recent_alerts %}
+                {% for alert in recent_alerts %}
+                  <div class="flex items-start gap-3 rounded-xl p-2 hover:bg-slate-50 transition">
+                    <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg {{ alert.style }}">
+                      <i class="fa-solid {{ alert.icon }} text-xs"></i>
+                    </span>
+                    <div class="min-w-0">
+                      <p class="truncate text-xs font-semibold text-slate-800">{{ alert.title }}</p>
+                      <p class="truncate text-[11px] text-slate-500">{{ alert.detail }}</p>
+                    </div>
+                  </div>
+                {% endfor %}
+              {% else %}
+                <p class="px-2 py-4 text-center text-xs text-slate-500">No recent download activity yet.</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Profile Dropdown -->
+        <div class="relative">
+          <button
+            type="button"
+            data-dropdown-toggle="profile-menu"
+            class="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white py-1.5 pl-2 pr-3 transition hover:bg-slate-50"
+          >
+            <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 text-[11px] font-bold text-white">
+              {{ current_admin.display_name[:2] | upper }}
+            </div>
+            <span class="hidden text-sm font-semibold text-slate-700 sm:inline">
+              {{ current_admin.display_name }}
+            </span>
+            <i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
+          </button>
+
+          <div
+            id="profile-menu"
+            data-dropdown-menu
+            class="hidden opacity-0 scale-95 transition-all duration-200 origin-top-right absolute right-0 mt-2 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-soft"
+          >
+            <div class="px-3 py-2 border-b border-slate-100">
+              <p class="text-sm font-semibold text-slate-800 truncate">{{ current_admin.display_name }}</p>
+              <p class="text-xs text-slate-500 truncate">{{ current_admin.email }}</p>
+            </div>
+            <div class="py-1">
+              <a
+                href="{{ url_for('dashboard') }}"
+                class="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-50 hover:text-indigo-600"
+              >
+                <i class="fa-solid fa-gauge-high w-4 text-center"></i>
+                Dashboard
+              </a>
+              <a
+                href="{{ url_for('settings') }}"
+                class="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-50 hover:text-indigo-600"
+              >
+                <i class="fa-solid fa-gear w-4 text-center"></i>
+                Admin Settings
+              </a>
+            </div>
+            <div class="border-t border-slate-100 pt-1">
+              <form method="post" action="{{ url_for('logout') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <button
+                  type="submit"
+                  class="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm font-medium text-rose-600 transition hover:bg-rose-50"
+                >
+                  <i class="fa-solid fa-right-from-bracket w-4 text-center"></i>
+                  Sign Out
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Page Body -->
+    <main class="flex-1 p-4 sm:p-6 lg:p-8">
+      <div class="mx-auto max-w-7xl">
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

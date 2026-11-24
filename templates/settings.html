@@ -1,0 +1,716 @@
+{% extends "admin_layout.html" %}
+
+{% block title %}Admin Settings · {{ site_settings.site_name }}{% endblock %}
+{% block page_title %}Admin Settings{% endblock %}
+{% block page_subtitle %}Manage application preferences, security policy &amp; notification alerts{% endblock %}
+
+{% block content %}
+<div
+  id="settings-container"
+  data-initial-tab="{{ active_tab }}"
+  class="grid grid-cols-1 gap-6 lg:grid-cols-12 animate-fade-in-up"
+>
+  <!-- Left Settings Navigation -->
+  <aside class="lg:col-span-3">
+    <div class="rounded-2xl border border-slate-200/80 bg-white p-3 shadow-soft">
+      <div class="flex flex-row gap-1.5 overflow-x-auto lg:flex-col">
+        <button
+          type="button"
+          data-settings-tab="general"
+          class="flex shrink-0 items-center gap-3 rounded-xl border px-3.5 py-2.5 text-left text-sm font-semibold transition"
+        >
+          <i class="fa-solid fa-sliders w-4 text-center"></i>
+          <span>General</span>
+        </button>
+
+        <button
+          type="button"
+          data-settings-tab="paths"
+          class="flex shrink-0 items-center gap-3 rounded-xl border px-3.5 py-2.5 text-left text-sm font-semibold transition"
+        >
+          <i class="fa-solid fa-folder-open w-4 text-center"></i>
+          <span>Download Paths</span>
+        </button>
+
+        <button
+          type="button"
+          data-settings-tab="sources"
+          class="flex shrink-0 items-center gap-3 rounded-xl border px-3.5 py-2.5 text-left text-sm font-semibold transition"
+        >
+          <i class="fa-solid fa-globe w-4 text-center"></i>
+          <span>Source URLs</span>
+        </button>
+
+        <button
+          type="button"
+          data-settings-tab="security"
+          class="flex shrink-0 items-center gap-3 rounded-xl border px-3.5 py-2.5 text-left text-sm font-semibold transition"
+        >
+          <i class="fa-solid fa-shield-halved w-4 text-center"></i>
+          <span>Security &amp; Account</span>
+        </button>
+
+        <button
+          type="button"
+          data-settings-tab="notifications"
+          class="flex shrink-0 items-center gap-3 rounded-xl border px-3.5 py-2.5 text-left text-sm font-semibold transition"
+        >
+          <i class="fa-solid fa-bell w-4 text-center"></i>
+          <span>Notifications</span>
+        </button>
+      </div>
+
+      <div class="mt-4 hidden border-t border-slate-100 pt-4 px-2 lg:block">
+        <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Account Updated</p>
+        <p class="mt-1 text-xs font-medium text-slate-600">{{ current_admin.updated_at }}</p>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Right Settings Panels -->
+  <div class="lg:col-span-9 space-y-6">
+    <!-- Panel 1: General -->
+    <section
+      data-settings-panel="general"
+      class="rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-soft"
+    >
+      <div class="flex items-start justify-between gap-4 border-b border-slate-100 pb-5">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">General &amp; Pipeline Settings</h2>
+          <p class="mt-1 text-xs text-slate-500">
+            Configure site branding, worker concurrency limits, and maintenance state.
+          </p>
+        </div>
+        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+          <i class="fa-solid fa-sliders"></i>
+        </span>
+      </div>
+
+      <form method="post" action="{{ url_for('settings', tab='general') }}" data-loading-form class="mt-6 space-y-5">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <input type="hidden" name="section" value="general" />
+
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div>
+            <label for="site_name" class="block text-sm font-semibold text-slate-700">
+              Application Name
+            </label>
+            <input
+              id="site_name"
+              name="site_name"
+              type="text"
+              required
+              value="{{ site_settings.site_name }}"
+              class="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+            />
+          </div>
+
+          <div>
+            <label for="support_email" class="block text-sm font-semibold text-slate-700">
+              Support Email
+            </label>
+            <input
+              id="support_email"
+              name="support_email"
+              type="email"
+              required
+              value="{{ site_settings.support_email }}"
+              class="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label for="site_tagline" class="block text-sm font-semibold text-slate-700">
+            Console Tagline
+          </label>
+          <input
+            id="site_tagline"
+            name="site_tagline"
+            type="text"
+            value="{{ site_settings.site_tagline }}"
+            class="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+          />
+        </div>
+
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div>
+            <label for="max_concurrent_downloads" class="block text-sm font-semibold text-slate-700">
+              Max Concurrent Downloads (1–100)
+            </label>
+            <input
+              id="max_concurrent_downloads"
+              name="max_concurrent_downloads"
+              type="number"
+              min="1"
+              max="100"
+              required
+              value="{{ site_settings.max_concurrent_downloads }}"
+              class="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+            />
+          </div>
+
+          <div>
+            <label for="storage_quota_gb" class="block text-sm font-semibold text-slate-700">
+              Storage Quota (GB)
+            </label>
+            <input
+              id="storage_quota_gb"
+              name="storage_quota_gb"
+              type="number"
+              min="10"
+              max="10000"
+              required
+              value="{{ site_settings.storage_quota_gb }}"
+              class="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+            />
+          </div>
+        </div>
+
+        <!-- Maintenance Mode Toggle -->
+        <div class="flex items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4">
+          <div>
+            <p class="text-sm font-semibold text-slate-800">Maintenance Mode</p>
+            <p class="text-xs text-slate-500">
+              Pause new queued jobs and display a maintenance banner across the admin console.
+            </p>
+          </div>
+          <label class="relative inline-flex cursor-pointer items-center shrink-0">
+            <input
+              type="checkbox"
+              name="maintenance_mode"
+              class="peer sr-only"
+              {% if site_settings.maintenance_mode == '1' %}checked{% endif %}
+            />
+            <span class="h-6 w-11 rounded-full bg-slate-300 transition-colors duration-200 peer-checked:bg-amber-500"></span>
+            <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 peer-checked:translate-x-5"></span>
+          </label>
+        </div>
+
+        <div class="flex justify-end pt-2">
+          <button
+            type="submit"
+            data-loading-text="Saving..."
+            class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-glow transition hover:from-indigo-500 hover:to-violet-500 hover:-translate-y-0.5"
+          >
+            <i data-submit-spinner class="hidden fa-solid fa-circle-notch fa-spin"></i>
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span data-submit-label>Save General Settings</span>
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Panel 1b: Download Paths -->
+    <section
+      data-settings-panel="paths"
+      class="hidden rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-soft"
+    >
+      <div class="flex items-start justify-between gap-4 border-b border-slate-100 pb-5">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Media Download Paths</h2>
+          <p class="mt-1 text-xs text-slate-500">
+            Configure destination directories where Movies, TV Shows, and Anime downloads will be saved.
+          </p>
+        </div>
+        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+          <i class="fa-solid fa-folder-open"></i>
+        </span>
+      </div>
+
+      <form method="post" action="{{ url_for('settings', tab='paths') }}" data-loading-form class="mt-6 space-y-5">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <input type="hidden" name="section" value="paths" />
+
+        {% set media_paths = [
+          {
+            'key': 'movies_download_path',
+            'label': 'Movies Folder Path',
+            'desc': 'Destination directory for completed movie downloads',
+            'icon': 'fa-film',
+            'icon_style': 'bg-indigo-50 text-indigo-600',
+            'placeholder': '~/Downloads/Origin/Movies'
+          },
+          {
+            'key': 'tv_download_path',
+            'label': 'TV Shows Folder Path',
+            'desc': 'Destination directory for TV series and episodes',
+            'icon': 'fa-tv',
+            'icon_style': 'bg-sky-50 text-sky-600',
+            'placeholder': '~/Downloads/Origin/TV'
+          },
+          {
+            'key': 'anime_download_path',
+            'label': 'Anime Folder Path',
+            'desc': 'Destination directory for anime series and films',
+            'icon': 'fa-wand-magic-sparkles',
+            'icon_style': 'bg-fuchsia-50 text-fuchsia-600',
+            'placeholder': '~/Downloads/Origin/Anime'
+          }
+        ] %}
+
+        <div class="space-y-4">
+          {% for item in media_paths %}
+            {% set exists = path_statuses.get(item.key, False) %}
+            <div class="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 transition hover:border-indigo-200 hover:bg-white">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-3">
+                  <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl {{ item.icon_style }}">
+                    <i class="fa-solid {{ item.icon }}"></i>
+                  </span>
+                  <div>
+                    <label for="{{ item.key }}" class="block text-sm font-semibold text-slate-800">
+                      {{ item.label }}
+                    </label>
+                    <p class="text-xs text-slate-500">{{ item.desc }}</p>
+                  </div>
+                </div>
+
+                {% if exists %}
+                  <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 border border-emerald-200">
+                    <i class="fa-solid fa-circle-check text-[10px]"></i>
+                    Directory ready
+                  </span>
+                {% else %}
+                  <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 border border-amber-200">
+                    <i class="fa-solid fa-folder-plus text-[10px]"></i>
+                    Not created yet
+                  </span>
+                {% endif %}
+              </div>
+
+              <div class="relative mt-3">
+                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                  <i class="fa-regular fa-folder text-xs"></i>
+                </span>
+                <input
+                  id="{{ item.key }}"
+                  name="{{ item.key }}"
+                  type="text"
+                  required
+                  placeholder="{{ item.placeholder }}"
+                  value="{{ site_settings[item.key] }}"
+                  class="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 font-mono text-xs sm:text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+                />
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <!-- Auto-create toggle -->
+        <div class="flex items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4">
+          <div>
+            <p class="text-sm font-semibold text-slate-800">Create missing directories on save</p>
+            <p class="text-xs text-slate-500">
+              Automatically create any folder above if it does not already exist on disk.
+            </p>
+          </div>
+          <label class="relative inline-flex cursor-pointer items-center shrink-0">
+            <input
+              type="checkbox"
+              name="create_missing_dirs"
+              class="peer sr-only"
+            />
+            <span class="h-6 w-11 rounded-full bg-slate-300 transition-colors duration-200 peer-checked:bg-indigo-600"></span>
+            <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 peer-checked:translate-x-5"></span>
+          </label>
+        </div>
+
+        <div class="flex justify-end pt-2">
+          <button
+            type="submit"
+            data-loading-text="Saving paths..."
+            class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-glow transition hover:from-indigo-500 hover:to-violet-500 hover:-translate-y-0.5"
+          >
+            <i data-submit-spinner class="hidden fa-solid fa-circle-notch fa-spin"></i>
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span data-submit-label>Save Download Paths</span>
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Panel 1c: Source Base URLs -->
+    <section
+      data-settings-panel="sources"
+      class="hidden rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-soft"
+    >
+      <div class="flex items-start justify-between gap-4 border-b border-slate-100 pb-5">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Source &amp; Scraper Base URLs</h2>
+          <p class="mt-1 text-xs text-slate-500">
+            Update mirror domains for HDHub4u and 1337x whenever an upstream domain changes.
+          </p>
+        </div>
+        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+          <i class="fa-solid fa-globe"></i>
+        </span>
+      </div>
+
+      <form method="post" action="{{ url_for('settings', tab='sources') }}" data-loading-form class="mt-6 space-y-5">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <input type="hidden" name="section" value="sources" />
+
+        <div class="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4">
+          <label for="hdhub4u_base_url" class="block text-sm font-semibold text-slate-800">
+            HDHub4u Base URL
+          </label>
+          <p class="text-xs text-slate-500">Used by the Recent Movies &amp; HTTP download resolver</p>
+          <div class="relative mt-2.5">
+            <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+              <i class="fa-solid fa-film text-xs"></i>
+            </span>
+            <input
+              id="hdhub4u_base_url"
+              name="hdhub4u_base_url"
+              type="url"
+              required
+              placeholder="https://new16.hdhub4u.cl"
+              value="{{ site_settings.hdhub4u_base_url }}"
+              class="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 font-mono text-xs sm:text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+            />
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4">
+          <label for="x1337_base_url" class="block text-sm font-semibold text-slate-800">
+            1337x Base URL
+          </label>
+          <p class="text-xs text-slate-500">Used by the 1337x 24h popular movies, TV &amp; anime scraper</p>
+          <div class="relative mt-2.5">
+            <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+              <i class="fa-solid fa-magnet text-xs"></i>
+            </span>
+            <input
+              id="x1337_base_url"
+              name="x1337_base_url"
+              type="url"
+              required
+              placeholder="https://1337x.to"
+              value="{{ site_settings.x1337_base_url }}"
+              class="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 font-mono text-xs sm:text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+            />
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-2">
+          <button
+            type="submit"
+            data-loading-text="Saving URLs..."
+            class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-glow transition hover:from-indigo-500 hover:to-violet-500 hover:-translate-y-0.5"
+          >
+            <i data-submit-spinner class="hidden fa-solid fa-circle-notch fa-spin"></i>
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span data-submit-label>Save Source URLs</span>
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Panel 2: Security & Account -->
+    <section
+      data-settings-panel="security"
+      class="hidden rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-soft"
+    >
+      <div class="flex items-start justify-between gap-4 border-b border-slate-100 pb-5">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Security &amp; Admin Account</h2>
+          <p class="mt-1 text-xs text-slate-500">
+            Update administrator profile details, session timeout, and password credentials.
+          </p>
+        </div>
+        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+          <i class="fa-solid fa-shield-halved"></i>
+        </span>
+      </div>
+
+      <form method="post" action="{{ url_for('settings', tab='security') }}" data-loading-form class="mt-6 space-y-5">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <input type="hidden" name="section" value="security" />
+
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div>
+            <label for="display_name" class="block text-sm font-semibold text-slate-700">
+              Admin Display Name
+            </label>
+            <input
+              id="display_name"
+              name="display_name"
+              type="text"
+              required
+              value="{{ current_admin.display_name }}"
+              class="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+            />
+          </div>
+
+          <div>
+            <label for="admin_email" class="block text-sm font-semibold text-slate-700">
+              Admin Email
+            </label>
+            <input
+              id="admin_email"
+              name="email"
+              type="email"
+              required
+              value="{{ current_admin.email }}"
+              class="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div>
+            <label for="session_timeout_minutes" class="block text-sm font-semibold text-slate-700">
+              Session Timeout (Minutes)
+            </label>
+            <input
+              id="session_timeout_minutes"
+              name="session_timeout_minutes"
+              type="number"
+              min="5"
+              max="1440"
+              required
+              value="{{ site_settings.session_timeout_minutes }}"
+              class="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+            />
+          </div>
+
+          <div class="flex items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4">
+            <div>
+              <p class="text-sm font-semibold text-slate-800">Require 2FA Verification</p>
+              <p class="text-xs text-slate-500">Enforce MFA policy for admin sessions</p>
+            </div>
+            <label class="relative inline-flex cursor-pointer items-center shrink-0">
+              <input
+                type="checkbox"
+                name="require_2fa"
+                class="peer sr-only"
+                {% if site_settings.require_2fa == '1' %}checked{% endif %}
+              />
+              <span class="h-6 w-11 rounded-full bg-slate-300 transition-colors duration-200 peer-checked:bg-indigo-600"></span>
+              <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 peer-checked:translate-x-5"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="border-t border-slate-100 pt-5">
+          <h3 class="text-sm font-bold text-slate-900">Change Password</h3>
+          <p class="mt-0.5 text-xs text-slate-500">Leave blank if you do not want to change your password.</p>
+
+          <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <label for="current_password" class="block text-xs font-semibold text-slate-600">
+                Current Password
+              </label>
+              <div class="relative mt-1.5">
+                <input
+                  id="current_password"
+                  name="current_password"
+                  type="password"
+                  autocomplete="current-password"
+                  class="w-full rounded-xl border border-slate-200 bg-slate-50/70 py-2.5 pl-3.5 pr-10 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+                />
+                <button
+                  type="button"
+                  data-toggle-password="current_password"
+                  aria-label="Toggle current password visibility"
+                  class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600"
+                >
+                  <i class="fa-regular fa-eye text-xs"></i>
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label for="new_password" class="block text-xs font-semibold text-slate-600">
+                New Password
+              </label>
+              <div class="relative mt-1.5">
+                <input
+                  id="new_password"
+                  name="new_password"
+                  type="password"
+                  autocomplete="new-password"
+                  class="w-full rounded-xl border border-slate-200 bg-slate-50/70 py-2.5 pl-3.5 pr-10 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+                />
+                <button
+                  type="button"
+                  data-toggle-password="new_password"
+                  aria-label="Toggle new password visibility"
+                  class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600"
+                >
+                  <i class="fa-regular fa-eye text-xs"></i>
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label for="confirm_password" class="block text-xs font-semibold text-slate-600">
+                Confirm New Password
+              </label>
+              <div class="relative mt-1.5">
+                <input
+                  id="confirm_password"
+                  name="confirm_password"
+                  type="password"
+                  autocomplete="new-password"
+                  class="w-full rounded-xl border border-slate-200 bg-slate-50/70 py-2.5 pl-3.5 pr-10 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+                />
+                <button
+                  type="button"
+                  data-toggle-password="confirm_password"
+                  aria-label="Toggle confirm password visibility"
+                  class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600"
+                >
+                  <i class="fa-regular fa-eye text-xs"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3">
+            <div class="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+              <div id="password-strength-bar" class="h-full w-0 rounded-full bg-slate-300 transition-all duration-300"></div>
+            </div>
+            <p id="password-strength-label" class="mt-1.5 text-[11px] text-slate-500">
+              Enter a new password to check strength
+            </p>
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-2">
+          <button
+            type="submit"
+            data-loading-text="Updating..."
+            class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-glow transition hover:from-indigo-500 hover:to-violet-500 hover:-translate-y-0.5"
+          >
+            <i data-submit-spinner class="hidden fa-solid fa-circle-notch fa-spin"></i>
+            <i class="fa-solid fa-circle-check"></i>
+            <span data-submit-label>Update Security Settings</span>
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Panel 3: Notifications -->
+    <section
+      data-settings-panel="notifications"
+      class="hidden rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-soft"
+    >
+      <div class="flex items-start justify-between gap-4 border-b border-slate-100 pb-5">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Notifications &amp; Webhooks</h2>
+          <p class="mt-1 text-xs text-slate-500">
+            Choose which operational alerts and webhook dispatches are active.
+          </p>
+        </div>
+        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
+          <i class="fa-solid fa-bell"></i>
+        </span>
+      </div>
+
+      <form method="post" action="{{ url_for('settings', tab='notifications') }}" data-loading-form class="mt-6 space-y-4">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <input type="hidden" name="section" value="notifications" />
+
+        <div class="flex items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4">
+          <div class="flex items-start gap-3">
+            <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+              <i class="fa-regular fa-envelope"></i>
+            </span>
+            <div>
+              <p class="text-sm font-semibold text-slate-800">Email Alerts</p>
+              <p class="text-xs text-slate-500">Send important system status notifications to admin email.</p>
+            </div>
+          </div>
+          <label class="relative inline-flex cursor-pointer items-center shrink-0">
+            <input
+              type="checkbox"
+              name="email_alerts"
+              class="peer sr-only"
+              {% if site_settings.email_alerts == '1' %}checked{% endif %}
+            />
+            <span class="h-6 w-11 rounded-full bg-slate-300 transition-colors duration-200 peer-checked:bg-indigo-600"></span>
+            <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 peer-checked:translate-x-5"></span>
+          </label>
+        </div>
+
+        <div class="flex items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4">
+          <div class="flex items-start gap-3">
+            <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+            </span>
+            <div>
+              <p class="text-sm font-semibold text-slate-800">Failed Transfer Alerts</p>
+              <p class="text-xs text-slate-500">Trigger an immediate alert when a download job fails.</p>
+            </div>
+          </div>
+          <label class="relative inline-flex cursor-pointer items-center shrink-0">
+            <input
+              type="checkbox"
+              name="failed_job_alerts"
+              class="peer sr-only"
+              {% if site_settings.failed_job_alerts == '1' %}checked{% endif %}
+            />
+            <span class="h-6 w-11 rounded-full bg-slate-300 transition-colors duration-200 peer-checked:bg-indigo-600"></span>
+            <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 peer-checked:translate-x-5"></span>
+          </label>
+        </div>
+
+        <div class="flex items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4">
+          <div class="flex items-start gap-3">
+            <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+              <i class="fa-solid fa-calendar-check"></i>
+            </span>
+            <div>
+              <p class="text-sm font-semibold text-slate-800">Daily Summary Digest</p>
+              <p class="text-xs text-slate-500">Receive a morning summary of throughput and storage metrics.</p>
+            </div>
+          </div>
+          <label class="relative inline-flex cursor-pointer items-center shrink-0">
+            <input
+              type="checkbox"
+              name="daily_digest"
+              class="peer sr-only"
+              {% if site_settings.daily_digest == '1' %}checked{% endif %}
+            />
+            <span class="h-6 w-11 rounded-full bg-slate-300 transition-colors duration-200 peer-checked:bg-indigo-600"></span>
+            <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 peer-checked:translate-x-5"></span>
+          </label>
+        </div>
+
+        <div class="pt-2">
+          <label for="webhook_url" class="block text-sm font-semibold text-slate-700">
+            Webhook Endpoint URL
+          </label>
+          <div class="relative mt-1.5">
+            <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+              <i class="fa-solid fa-link text-xs"></i>
+            </span>
+            <input
+              id="webhook_url"
+              name="webhook_url"
+              type="url"
+              placeholder="https://hooks.example.com/events"
+              value="{{ site_settings.webhook_url }}"
+              class="w-full rounded-xl border border-slate-200 bg-slate-50/70 py-2.5 pl-10 pr-4 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+            />
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-2">
+          <button
+            type="submit"
+            data-loading-text="Saving..."
+            class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-glow transition hover:from-indigo-500 hover:to-violet-500 hover:-translate-y-0.5"
+          >
+            <i data-submit-spinner class="hidden fa-solid fa-circle-notch fa-spin"></i>
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span data-submit-label>Save Notification Preferences</span>
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+</div>
+{% endblock %}
